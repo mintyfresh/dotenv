@@ -9,6 +9,30 @@ private static:
     string[string] _cache;
 
 public static:
+    @property
+    bool empty()
+    {
+        return _cache.length == 0;
+    }
+
+    @property
+    size_t length()
+    {
+        return _cache.length;
+    }
+
+    @property
+    const(string[]) keys()
+    {
+        return _cache.keys;
+    }
+
+    @property
+    const(string[]) values()
+    {
+        return _cache.values;
+    }
+
     void readEnv()
     {
         import std.exception;
