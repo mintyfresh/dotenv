@@ -88,7 +88,7 @@ public static:
 
     bool remove(string name)
     {
-        return _cache.remove(name);
+        return _cache.remove(name.toUpper);
     }
 
     /++
