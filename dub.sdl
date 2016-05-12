@@ -4,10 +4,3 @@ copyright "Copyright © 2016, Mihail K"
 authors "Mihail-K"
 license "MIT"
 targetType "library"
-
-configuration "default" {
-  # Default configuration
-}
-configuration "envfile" {
-  versions "EnvFile"
-}

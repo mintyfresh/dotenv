@@ -11,29 +11,36 @@ private static:
 public static:
     void readEnv()
     {
-        version(EnvFile)
-        {
-            import std.stdio, std.string;
+        import std.exception;
+        import std.process : environment;
+        import std.stdio, std.string;
 
+        // Copy the environment first.
+        _cache = environment.toAA;
+
+        try
+        {
+            // Open the .env file if it exists.
             File file = File(".env", "r");
             scope(exit) file.close;
 
+            // Read and store variables.
             foreach(line; file.byLineCopy)
             {
                 auto result = line.split("=");
                 if(result.length < 2) continue;
 
+                // Convert all names to upper case.
                 string name  = result[0].strip.toUpper;
                 string value = result[1 .. $].join.strip;
 
                 typeof(this)[name] = value;
             }
         }
-        else
+        catch(ErrnoException)
         {
-            import std.process : environment;
-
-            _cache = environment.toAA;
+            // TODO : Handle this somehow.
+            // Dismiss silently for now.
         }
     }
 
