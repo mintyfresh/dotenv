@@ -90,7 +90,7 @@ public static:
         return _cache[name.toUpper] = to!string(value);
     }
 
-    template opDispatch(string name) if(name.all!isUpper)
+    template opDispatch(string name) if(name.all!(c => c.isUpper || !c.isAlpha))
     {
         @property
         T opDispatch(T = string, Args...)(Args args) if(Args.length == 0)
