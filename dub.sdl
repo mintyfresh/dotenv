@@ -1,5 +1,5 @@
 name "dotenv"
-description "dovenv implementation for D. Simplifies handling environment variables."
+description "dotenv implementation for D. Simplifies handling environment variables."
 copyright "Copyright © 2016, Mihail K"
 authors "Mihail-K"
 license "MIT"

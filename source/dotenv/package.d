@@ -44,6 +44,32 @@ public static:
         return _cache.values;
     }
 
+    int opApply(scope int delegate(string) dg)
+    {
+        foreach(value; _cache)
+        {
+            if(int result = dg(value))
+            {
+                return value;
+            }
+        }
+
+        return 0;
+    }
+
+    int opApply(scope int delegate(string, string) dg)
+    {
+        foreach(key, value; _cache)
+        {
+            if(int result = dg(key, value))
+            {
+                return value;
+            }
+        }
+
+        return 0;
+    }
+
     string[string] opIndex()
     {
         return _cache.dup;
@@ -92,8 +118,25 @@ public static:
     }
 
     /++
+     + Loads system environment variables (but not the dotenv file).
+     ++/
+    void loadSystem()
+    {
+        import std.process : environment;
+
+        // Copy the environment first.
+        foreach(key, value; environment.toAA)
+        {
+            if(name !in _cache)
+            {
+                _cache[name] = value;
+            }
+        }
+    }
+
+    /++
      + Copies environment variables, then loads the dotenv file, if present.
-     + Variables declared in the .env file with override system environment variables.
+     + Variables declared in the .env file will override system environment variables.
      + All variable names are case-insensitive, and are stored as upper case.
      +
      + Params:
@@ -111,30 +154,35 @@ public static:
         }))
     {
         import std.exception;
-        import std.process : environment;
         import std.stdio, std.string;
 
         try
         {
-            if(copySystem)
-            {
-                // Copy the environment first.
-                _cache = environment.toAA;
-            }
+            // Optionally copy environment.
+            if(copySystem) loadSystem;
 
             // Open the .env file if it exists.
             File file = File(fileName, "r");
             scope(exit) file.close;
 
             // Read and store variables.
-            foreach(line; file.byLineCopy)
+            foreach(line; file.byLineCopy.map!strip)
             {
+                // Skip empty lines or line comments.
+                if(line.length == 0 || line[0] == "#") continue;
+
                 auto result = line.split("=");
-                if(result.length < 2) continue;
+                if(result.length < 1) continue;
 
                 // Convert all names to upper case.
                 string name  = result[0].strip.toUpper;
-                string value = result[1 .. $].join.strip;
+                string value = "";
+
+                if(result.length > 0)
+                {
+                    // Recostruct the right side of the assignment.
+                    value = result[1 .. $].join("=").strip;
+                }
 
                 typeof(this)[name] = value;
             }
