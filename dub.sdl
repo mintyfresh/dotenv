@@ -1,0 +1,6 @@
+name "dotenv"
+description ".env file implementation."
+copyright "Copyright © 2016, Mihail K"
+authors "Mihail-K"
+license "MIT"
+targetType "library"
