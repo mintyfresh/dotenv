@@ -86,6 +86,30 @@ unittest
 
 It also provides `empty`, `length`, `keys`, and `values` properties that behave as expected.
 
+### Different Environments
+
+dotenv is great for managing different environments. For example, if you have a local development environment where you needed to load your configuration exclusively from `.env`, and a remote production environment where there is no `.env` file, but only system environment variables, you could do something like,
+
+```d
+import dotenv;
+
+shared static this()
+{
+    // Try to load .env file without system variables.
+    Env.load!((e) {
+        import std.exception : ErrnoException;
+
+        if(cast(ErrnoException) e)
+        {
+            // .env file was not found, load system.
+            Env.loadSystem;
+        }
+    })(".env", false);
+}
+```
+
+`Env.load` takes optional callback functions (which must be callable with an Exception object as a parameter), to which any exceptions throw during initialization are forwarded. Here we check if it was an `ErrnoException`, and assume that if it is, no `.env` file was found, and that we're not in our local development environment.
+
 ## Planned Features
 
   - Support for JSON/SDLang dotenv files, for more complex variables
