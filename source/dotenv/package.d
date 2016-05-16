@@ -3,7 +3,13 @@ module dotenv;
 
 import std.algorithm;
 import std.conv;
+import std.string;
 import std.uni;
+
+bool isNameChar(T)(T ch)
+{
+    return ch.isUpper || !ch.isAlpha;
+}
 
 /++
  + Stores and accesses loaded environment variables.
@@ -11,71 +17,71 @@ import std.uni;
  ++/
 shared struct Env
 {
-private static:
-    string[string] _cache;
+private:
+    static string[string] _cache;
 
-public static:
-    void clear()
+public:
+    static void clear()
     {
         _cache = typeof(_cache).init;
     }
 
     @property
-    bool empty()
+    static bool empty()
     {
         return _cache.length == 0;
     }
 
     @property
-    size_t length()
+    static size_t length()
     {
         return _cache.length;
     }
 
     @property
-    const(string[]) keys()
+    static const(string[]) keys()
     {
         return _cache.keys;
     }
 
     @property
-    const(string[]) values()
+    static const(string[]) values()
     {
         return _cache.values;
     }
 
-    int opApply(scope int delegate(string) dg)
+    static int opApply(scope int delegate(string) dg)
     {
         foreach(value; _cache)
         {
             if(int result = dg(value))
             {
-                return value;
+                return result;
             }
         }
 
         return 0;
     }
 
-    int opApply(scope int delegate(string, string) dg)
+    static int opApply(scope int delegate(string, string) dg)
     {
         foreach(key, value; _cache)
         {
             if(int result = dg(key, value))
             {
-                return value;
+                return result;
             }
         }
 
         return 0;
     }
 
-    string[string] opIndex()
+    static string[string] opIndex()
     {
         return _cache.dup;
     }
 
-    string opIndex(string name)
+    static string opIndex(string name)
     {
         if(string* variable = name.toUpper in _cache)
         {
@@ -85,15 +91,15 @@ public static:
         return null;
     }
 
-    string opIndexAssign(T)(T value, string name)
+    static string opIndexAssign(T)(T value, string name)
     {
         return _cache[name.toUpper] = to!string(value);
     }
 
-    template opDispatch(string name) if(name.all!(c => c.isUpper || !c.isAlpha))
+    template opDispatch(string name) if(name.map!isNameChar.all)
     {
         @property
-        T opDispatch(T = string, Args...)(Args args) if(Args.length == 0)
+        static T opDispatch(T = string, Args...)(Args args) if(Args.length == 0)
         {
             if(string variable = typeof(this)[name])
             {
@@ -104,7 +110,7 @@ public static:
         }
 
         @property
-        T opDispatch(T = string, Args...)(Args args) if(Args.length == 1)
+        static T opDispatch(T = string, Args...)(Args args) if(Args.length == 1)
         {
             typeof(this)[name] = args[0];
 
@@ -112,7 +118,7 @@ public static:
         }
     }
 
-    bool remove(string name)
+    static bool remove(string name)
     {
         return _cache.remove(name.toUpper);
     }
@@ -120,12 +126,12 @@ public static:
     /++
      + Loads system environment variables (but not the dotenv file).
      ++/
-    void loadSystem()
+    static void loadSystem()
     {
         import std.process : environment;
 
         // Copy the environment first.
-        foreach(key, value; environment.toAA)
+        foreach(name, value; environment.toAA)
         {
             if(name !in _cache)
             {
@@ -144,7 +150,7 @@ public static:
      +   fileName   = The name of the dovenv file (".env" by default).
      +   copySystem = If true, system environment variables are loaded as well.
      ++/
-    void load(handlers...)(string fileName = ".env", bool copySystem = true)
+    static void load(handlers...)(string fileName = ".env", bool copySystem = true)
         if(__traits(compiles, {
             Exception e = void;
             foreach(handler; handlers)
@@ -169,7 +175,7 @@ public static:
             foreach(line; file.byLineCopy.map!strip)
             {
                 // Skip empty lines or line comments.
-                if(line.length == 0 || line[0] == "#") continue;
+                if(line.length == 0 || line[0] == '#') continue;
 
                 auto result = line.split("=");
                 if(result.length < 1) continue;
